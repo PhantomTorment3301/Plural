@@ -1,2 +1,5 @@
 **INSTALLATION**
- - 1.git 323232
+ - 1.Install
+```
+    git clone https://github.com/PhantomTorment3301/Plural
+```
