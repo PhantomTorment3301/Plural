@@ -6,11 +6,12 @@
 - 2 On the target computer run BackDoor.bat (if there are errors, install java)
 - 3 Run the Remote Control.bat file
 
+**COMMANDS**
+  
+
 **COLORS**
 > [!WARNING]
 > only for PowerShell
-
-
 
 Text color
 - 30 - `rgb(0,0,0)` - Black
