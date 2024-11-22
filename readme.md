@@ -5,5 +5,4 @@
 ```
 - 2 On the target computer run BackDoor.bat (if there are errors, install java)
 - 3 Run the Remote Control.bat file
-\u001B[103m 
-  sadads
+`rgb(9, 105, 218)`
