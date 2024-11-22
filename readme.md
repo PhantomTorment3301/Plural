@@ -7,7 +7,8 @@
 - 3 Run the Remote Control.bat file
 
 **COLORS**
-(only for PowerShell)
+> [!WARNING]
+> only for PowerShell
 
 
 
