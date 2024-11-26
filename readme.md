@@ -6,15 +6,6 @@
 - 2 On the target computer run BackDoor.bat (if there are errors, install java)
 - 3 Run the Remote Control.bat file
 
-**COMMANDS**
-
-- `ipconnect`
-
-- `searchip`
-
-- `tableconnect`
-
-- `changeport`
   
 
 **COLORS**
