@@ -2,339 +2,317 @@ import javax.swing.filechooser.FileSystemView;
 import java.awt.*;
 import java.io.*;
 import java.net.*;
+import java.util.InputMismatchException;
 import java.util.Objects;
 import java.util.Scanner;
 
-
 public class Plural {
-    static Socket socket;
-    static String pathDisk = " ";
-    static int cycle = 0;
-    static Scanner scanner = new Scanner(System.in);
-    static Runtime rt = Runtime.getRuntime();
+    private static final int DEFAULT_PORT = 8080;
+    private static Socket socket;
+    private static String pathDisk = " ";
+    private static Scanner scanner = new Scanner(System.in);
+    private static Runtime rt = Runtime.getRuntime();
     public static double version = 0.1;
 
-    public static void main(String[] args) throws IOException, InterruptedException {
+    public static void main(String[] args) {
+        new Plural().run();
+    }
 
-        int ip4 = 0;
-        int port = 8080;
-        boolean serverfound = false;
-
-
-        info("install");
-        int answer = scanner.nextInt();
-
-        while (answer!=9){
-        if (answer == 0) {
-            clr();
-
-            System.out.println("Введите ip");
-            String ip = scanner.nextLine();
-            String ip2 = scanner.nextLine();
-            clr();
-            System.out.println("Попытка подключения к " + ip2 + ":" + port);
+    private void run() {
+        while (true) {
             try {
-                socket = new Socket(ip2, port);
+                int ip4 = 0;
+                int port = DEFAULT_PORT;
 
+                displayInfo("install");
+                int answer = scanner.nextInt();
+                scanner.nextLine(); // consume the newline
 
-            info("price2");
-            answer = scanner.nextInt();}catch (Exception e){
-                System.err.println("ощибка");
-            }
-            while (answer!= 9){
-            if (answer==0){
-            while (true) {
-                String message = "mouse"+":"+MouseInfo.getPointerInfo().getLocation().x + ":" + MouseInfo.getPointerInfo().getLocation().y;
-                PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-                out.println(message);
-                System.out.println("отправлено: " + message);
-            }}
-            else if (answer==1) {
-                String message = "cmd"+":"+scanner.nextLine();
-                clr();
-                System.out.println("Введите cmd команду");
-                message = "cmd"+":"+scanner.nextLine();
-                PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-                out.println(message);
-                System.out.println("отправлено: " + message);
-                clr();
-                info("price2");
-            }
-                answer = scanner.nextInt();}
-        }
-        else if (answer == 1) {
-
-
-
-
-        while (ip4<=255) {
-            try {
-
-
-                String ip = InetAddress.getLocalHost().getHostAddress();
-                String[] addres = ip.split("\\.");
-
-
-                int ip1 = Integer.parseInt(addres[0]);
-                int ip2 = Integer.parseInt(addres[1]);
-                int ip3 = Integer.parseInt(addres[2]);
-
-
-                String serverIp = ip1 + "." + ip2 + "." + ip3 + "." + ip4;
-
-
-                clr();
-
-                System.out.println("Отправка запроса на " + serverIp + ":" + port);
-
-
-                if (InetAddress.getByName(serverIp).isReachable(10)) {
-
-                    System.out.println("ip активен!");
-                    Thread.sleep(500);
-                    clr();
-                    System.out.println("Запись в таблицу...");
-                    rt.exec(new String[]{"cmd.exe", "/k", "echo "+serverIp+" > "+pathDisk+"\\Plural\\ip-table\\"+serverIp+".txt"});
-                    Thread.sleep(2000);
-                    System.out.println("Успешно!");
-
-                    ip4++;
-
-
-
-
-                } else {
-                    serverfound = false;
-                    ip4++;
-                    System.err.println(serverIp + ":" + port + " Не доступен");
-                    Thread.sleep(300);
+                while (answer != 9) {
+                    switch (answer) {
+                        case 0:
+                            connectToServer(port);
+                            break;
+                        case 1:
+                            scanForActiveIPs(ip4, port);
+                            break;
+                        case 2:
+                            connectUsingIPTable(port);
+                            break;
+                        case 8:
+                            changePort();
+                            break;
+                        default:
+                            System.out.println("Неверный ввод. Попробуйте снова.");
+                    }
+                    displayInfo("logo");
+                    answer = scanner.nextInt();
+                    scanner.nextLine(); // consume the newline
                 }
+                break; // Выход из основного цикла
+            } catch (InputMismatchException e) {
+                System.out.println("Ошибка ввода. Пожалуйста, введите число. Попробуйте снова.");
+                scanner.nextLine(); // очистка ввода
+            } catch (IOException | InterruptedException e) {
+                System.err.println("Ошибка: " + e.getMessage());
+            }
+        }
+    }
+
+    private void connectToServer(int port) {
+        while (true) {
+            try {
+                System.out.println("Введите IP:");
+                String ip = scanner.nextLine();
+                System.out.println("Попытка подключения к " + ip + ":" + port);
+                socket = new Socket(ip, port);
+                handleClientCommands();
+                break; // Выход из цикла при успешном подключении
             } catch (IOException e) {
-                System.err.println(e);
+                System.err.println("Ошибка подключения: " + e.getMessage());
+                System.out.println("Попробуйте ввести IP снова.");
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
         }
-
     }
-        else if (answer == 2) {
-            File directory = new File(pathDisk+"\\Plural\\ip-table");
-            // Получаем список файлов и папок в директории
-            File[] filesList = directory.listFiles();
-            // Проверяем, что директория существует и не пуста
-            if (filesList != null) {
-                for (File file : filesList) {
-                    // Проверяем, является ли объект файлом
-                    if (file.isFile()) {
-                        BufferedReader br = new BufferedReader(new FileReader(pathDisk+"\\Plural\\ip-table\\"+file.getName()));
-                        String readFile;
-                        try {
-                            StringBuilder sb = new StringBuilder();
-                            String line = br.readLine();
 
-                            while (line != null) {
-                                sb.append(line);
-                                sb.append(System.lineSeparator());
-                                line = br.readLine();
-                            }
-                            readFile = sb.toString();
-                            System.out.println(readFile);
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        } finally {
-                            br.close();
-                        }
-                        serverfound = true;
-                        try {
+    private void handleClientCommands() throws IOException, InterruptedException {
+        int answer;
+        while (true) {
+            displayInfo("price2");
+            answer = scanner.nextInt();
+            scanner.nextLine(); // consume the newline
 
-
-                        Socket socket = new Socket("26.189.108.126", port);
-                        System.out.println("Сервер подключен!");
-
-
-
-
-
-                        while (serverfound) {
-                            String message = MouseInfo.getPointerInfo().getLocation().x + ":" + MouseInfo.getPointerInfo().getLocation().y;
-                            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-                            out.println(message);
-                        }
-                        }catch (Exception e){
-                            System.err.println(e);
-                        }
-                        System.out.println(file.getName());
-                    }}
+            if (answer == 0) {
+                sendMousePosition();
+            } else if (answer == 1) {
+                sendCommand();
+            } else if (answer == 9) {
+                break; // exit the loop
             } else {
-                System.out.println("Директория не существует или пуста.");
+                System.out.println("Неверный ввод. Попробуйте снова.");
             }
-            if (!serverfound) {
-                rt.exec(new String[]{"cmd.exe", "/k", "msg %username% Таблица ip пуста! Введите 1 чтобы добавить активные ip в таблицу"});
-
-            }
-
-
         }
-        else if (answer == 8) {
-            clr();
-            System.out.println("Введите порт");
-            port = scanner.nextInt();
-            clr();
-            System.out.println("Порт изменен на "+ port);
-            Thread.sleep(2000);
-            clr();
-        }
-        info("logo");
-        answer = scanner.nextInt();
     }
 
+    private void sendMousePosition() throws IOException {
+        String message = "mouse:" + MouseInfo.getPointerInfo().getLocation().x + ":" + MouseInfo.getPointerInfo().getLocation().y;
+        PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+        out.println(message);
+        System.out.println("Отправлено: " + message);
     }
-    public static void info(String inf) throws InterruptedException, IOException {
-        File[] paths;
-        FileSystemView fsv = FileSystemView.getFileSystemView();
 
-        paths = File.listRoots();
-        int wait = 100;
-        if (Objects.equals(inf, "logo")) {
+    private void sendCommand() throws IOException {
+        System.out.println("Введите cmd команду:");
+        String command = scanner.nextLine();
+        String message = "cmd:" + command;
+        PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+        out.println(message);
+        System.out.println("Отправлено: " + message);
+    }
 
+    private void scanForActiveIPs(int ip4, int port) {
+        while (ip4 <= 255) {
+            try {
+                String localIp = InetAddress.getLocalHost().getHostAddress();
+                String[] addressParts = localIp.split("\\.");
+                String serverIp = String.join(".", addressParts[0], addressParts[1], addressParts[2], String.valueOf(ip4));
 
-            System.out.print("██████╗░██╗░░░░░██╗░░░██╗██████╗░░█████╗░██╗░░░░░\n");
-            Thread.sleep(wait);
-            System.out.print("██╔══██╗██║░░░░░██║░░░██║██╔══██╗██╔══██╗██║░░░░░\n");
-            Thread.sleep(wait);
-            System.out.print("██████╔╝██║░░░░░██║░░░██║██████╔╝███████║██║░░░░░\n");
-            Thread.sleep(wait);
-            System.out.print("██╔═══╝░██║░░░░░██║░░░██║██╔══██╗██╔══██║██║░░░░░\n");
-            Thread.sleep(wait);
-            System.out.print("██║░░░░░███████╗╚██████╔╝██║░░██║██║░░██║███████╗\n");
-            Thread.sleep(wait);
-            System.out.print("╚═╝░░░░░╚══════╝░╚═════╝░╚═╝░░╚═╝╚═╝░░╚═╝╚══════╝\n");
-            Thread.sleep(wait);
-            System.out.println("root:"+pathDisk+"Plural\\Plural.java");
-            Thread.sleep(wait);
-
-            info("price1");
-
-        }
-        if (Objects.equals(inf, "price1")) {
-            System.out.println("v" + version);
-            Thread.sleep(wait);
-            System.out.println("0 - Ручное подключение по ip");
-            Thread.sleep(wait);
-            System.out.println("1 - Добавить активный ip в таблицу");
-            Thread.sleep(wait);
-            System.out.println("2 - Подключение по таблице");
-            Thread.sleep(wait);
-            System.out.println("8 - Изменить порт");
-            Thread.sleep(wait);
-            System.out.println("9 - Выход");
-
-
-        }
-        if (Objects.equals(inf, "price2")) {
-            System.out.println("v" + version);
-            Thread.sleep(wait);
-            System.out.println("0 - Управление мышью");
-            Thread.sleep(wait);
-            System.out.println("1 - cmd");
-            Thread.sleep(wait);
-            System.out.println("9 - Выход");}
-
-        if (Objects.equals(inf, "install")) {
-            clr();
-            System.out.println("Checking.");
-            Thread.sleep(wait * 4);
-            clr();
-            System.out.println("Checking..");
-            Thread.sleep(wait * 4);
-            clr();
-            System.out.println("Checking...");
-            Thread.sleep(wait * 4);
-            clr();
-            boolean install = false;
-            for (File path : paths) {
-                // prints file and directory paths
-
-                Thread.sleep(10);
-                File file = new File(path + "\\Plural\\readme.txt");
-                Thread.sleep(10);
-                if (file.exists()) {
-                    pathDisk = String.valueOf(path);
-                    System.out.println("Plural найден");
-                    Thread.sleep(1000);
-                    install = true;
-                    break;
+                System.out.print("Отправка запроса на " + serverIp + ":" + port+">");
+                if (InetAddress.getByName(serverIp).isReachable(10)) {
+                    System.out.print("\u001B[32m IP активен!");
+                    logActiveIP(serverIp);
+                } else {
+                    System.err.println(serverIp + ":" + port + " не доступен");
+                    Thread.sleep(100);
                 }
-
-                System.out.println(" ");
-
-
+                ip4++;
+            } catch (IOException e) {
+                System.err.println("Ошибка: " + e.getMessage());
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
             }
-            int i = 0;
+        }
+    }
 
-            if (!install) {
-                System.err.println("Plural не найден");
-                System.out.println(" ");
 
-                System.out.println("Выберите диск для установки\n");
-                for (File path : paths) {
-                    System.out.println(i + " - " + path + " " + fsv.getSystemTypeDescription(path));
-                    i++;
-                }
-                int chose = scanner.nextInt();
-                i = 0;
-                for (File path : paths) {
-                    if (i == chose) {
-                        pathDisk = String.valueOf(path);
-                        clr();
-                        System.out.println("Создание корневой папки");
-                        Thread.sleep(wait*10);
-                        rt.exec(new String[]{"cmd.exe", "/k", "mkdir " + path + "\\Plural"});
-                        clr();
-                        System.out.println("Открываю "+pathDisk+"\\Plural");
-                        Thread.sleep(wait*4);
-                        rt.exec(new String[]{"cmd.exe", "/k", "start " + path + "\\Plural"});
-                        clr();
-                        System.out.println("Создание таблиц ip");
-                        Thread.sleep(wait*10);
-                        rt.exec(new String[]{"cmd.exe", "/k", "mkdir " + path + "\\Plural\\ip-table"});
+    private void logActiveIP(String serverIp) throws IOException {
+        rt.exec(new String[]{"cmd.exe", "/c", "echo " + serverIp + " > " + pathDisk + "\\Plural\\ip-table\\" + serverIp + ".txt"});
+        System.out.println("Запись в таблицу >> \u001B[0m " + serverIp);
+    }
 
-                        System.out.println("Создание журнала подключений");
-                        Thread.sleep(wait*10);
-                        rt.exec(new String[]{"cmd.exe", "/k", "mkdir " + path + "\\Plural\\history"});
-                        rt.exec(new String[]{"cmd.exe", "/k", "echo > " + path + "\\Plural\\history\\history.txt"});
+    private void connectUsingIPTable(int port) {
+        File directory = new File(pathDisk + "\\Plural\\ip-table");
+        File[] filesList = directory.listFiles();
 
-                        Thread.sleep(wait);
-                        rt.exec(new String[]{"cmd.exe", "/k", "mkdir " + path + "\\Plural\\Screenshot"});
-                        rt.exec(new String[]{"cmd.exe", "/k", "copy src/Plural.java " + path + "\\Plural.java "});
-                        Thread.sleep(wait*10);
-
-                        rt.exec(new String[]{"cmd.exe", "/k", "copy "+System.getProperty("user.dir")+" " + path + "\\Plural"});
-                        Thread.sleep(wait*10);
-                        rt.exec(new String[]{"cmd.exe", "/k", "copy "+System.getProperty("user.dir")+"\\src\\Plural.class " + path + "\\Plural\\scr"});
-                        rt.exec(new String[]{"cmd.exe", "/k", "msg %username% done"});
-                        clr();
-                        System.out.println("done");
-                        Thread.sleep(wait*2);
-
+        if (filesList != null && filesList.length > 0) {
+            for (File file : filesList) {
+                if (file.isFile()) {
+                    try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+                        String serverIp = br.readLine();
+                        System.out.println("Подключение к серверу: " + serverIp);
+                        connectToServerUsingIP(serverIp, port);
+                    } catch (IOException e) {
+                        System.err.println("Ошибка при чтении файла: " + e.getMessage());
                     }
-                    System.out.println(i + " - " + path + " " + fsv.getSystemTypeDescription(path));
-                    i++;
                 }
             }
-
-
-
-            clr();
-            info("logo");
-
+        } else {
+            System.out.println("Директория не существует или пуста.");
         }
-
-
     }
 
-    public static void clr() {
-        System.out.println("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+    private void connectToServerUsingIP(String serverIp, int port) {
+        try (Socket socket = new Socket(serverIp, port)) {
+            System.out.println("Сервер подключен!");
+            while (true) {
+                String message = MouseInfo.getPointerInfo().getLocation().x + ":" + MouseInfo.getPointerInfo().getLocation().y;
+                PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+                out.println(message);
+            }
+        } catch (IOException e) {
+            System.err.println("Ошибка подключения: " + e.getMessage());
+        }
+    }
+
+    private void changePort() throws InterruptedException {
+        System.out.println("Введите новый порт:");
+        while (true) {
+            try {
+                int newPort = scanner.nextInt();
+                scanner.nextLine(); // consume the newline
+                System.out.println("Порт изменен на " + newPort);
+                break; // Выход из цикла при успешном изменении порта
+            } catch (InputMismatchException e) {
+                System.out.println("Ошибка ввода. Пожалуйста, введите число. Попробуйте снова.");
+                scanner.nextLine(); // очистка ввода
+            }
+        }
+    }
+
+    private void displayInfo(String inf) throws InterruptedException, IOException {
+        File[] paths = File.listRoots();
+        int wait = 100;
+
+        switch (inf) {
+            case "logo":
+                displayLogo(wait);
+                break;
+            case "price1":
+                displayMainMenu(wait);
+                break;
+            case "price2":
+                displayCommandMenu(wait);
+                break;
+            case "install":
+                checkInstallation(paths, wait);
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void displayLogo(int wait) throws InterruptedException, IOException {
+        System.out.print("██████╗░██╗░░░░░██╗░░░██╗██████╗░░█████╗░██╗░░░░░\n");
+        Thread.sleep(wait);
+        System.out.print("██╔══██╗██║░░░░░██║░░░██║██╔══██╗██╔══██╗██║░░░░░\n");
+        Thread.sleep(wait);
+        System.out.print("██████╔╝██║░░░░░██║░░░██║██████╔╝███████║██║░░░░░\n");
+        Thread.sleep(wait);
+        System.out.print("██╔═══╝░██║░░░░░██║░░░██║██╔══██╗██╔══██║██║░░░░░\n");
+        Thread.sleep(wait);
+        System.out.print("██║░░░░░███████╗╚██████╔╝██║░░██║██║░░██║███████╗\n");
+        Thread.sleep(wait);
+        System.out.print("╚═╝░░░░░╚══════╝░╚═════╝░╚═╝░░╚═╝╚═╝░░╚═╝╚══════╝\n");
+        Thread.sleep(wait);
+        System.out.println("root:" + pathDisk + "Plural\\Plural.java");
+        Thread.sleep(wait);
+        displayMainMenu(100);
+    }
+
+    private void displayMainMenu(int wait) throws InterruptedException {
+        System.out.println("v" + version);
+        Thread.sleep(wait);
+        System.out.println("0 - Ручное подключение по IP");
+        Thread.sleep(wait);
+        System.out.println("1 - Добавить активный IP в таблицу");
+        Thread.sleep(wait);
+        System.out.println("2 - Подключение по таблице");
+        Thread.sleep(wait);
+        System.out.println("8 - Изменить порт");
+        Thread.sleep(wait);
+        System.out.println("9 - Выход");
+    }
+
+    private void displayCommandMenu(int wait) throws InterruptedException {
+        System.out.println("v" + version);
+        Thread.sleep(wait);
+        System.out.println("0 - Управление мышью");
+        Thread.sleep(wait);
+        System.out.println("1 - cmd");
+        Thread.sleep(wait);
+        System.out.println("9 - Выход");
+    }
+
+    private void checkInstallation(File[] paths, int wait) throws InterruptedException, IOException {
+        boolean install = false;
+        for (File path : paths) {
+            Thread.sleep(10);
+            File file = new File(path + "\\Plural\\ip-table");
+            if (file.exists()) {
+                pathDisk = String.valueOf(path);
+                System.out.println("Plural найден");
+                install = true;
+                displayInfo("logo");
+                break;
+            }
+        }
+
+        if (!install) {
+            System.err.println("Plural не найден");
+            promptForInstallation(paths, wait);
+        }
+    }
+
+    private void promptForInstallation(File[] paths, int wait) throws InterruptedException, IOException {
+        System.out.println("Выберите диск для установки\n");
+        for (int i = 0; i < paths.length; i++) {
+            System.out.println(i + " - " + paths[i] + " " + FileSystemView.getFileSystemView().getSystemTypeDescription(paths[i]));
+        }
+        while (true) {
+            try {
+                int choice = scanner.nextInt();
+                scanner.nextLine(); // consume the newline
+                if (choice >= 0 && choice < paths.length) {
+                    pathDisk = String.valueOf(paths[choice]);
+                    createInstallationDirectories(wait);
+                    break; // Выход из цикла при успешном выборе
+                } else {
+                    System.out.println("Неверный выбор. Попробуйте снова.");
+                }
+            } catch (InputMismatchException e) {
+                System.out.println("Ошибка ввода. Пожалуйста, введите число. Попробуйте снова.");
+                scanner.nextLine(); // очистка ввода
+            }
+        }
+    }
+
+    private void createInstallationDirectories(int wait) throws InterruptedException, IOException {
+        System.out.println("Создание корневой папки");
+        Thread.sleep(wait * 10);
+        rt.exec(new String[]{"cmd.exe", "/c", "mkdir " + pathDisk + "\\Plural"});
+        Thread.sleep(wait * 4);
+        System.out.println("Создание таблиц IP");
+        Thread.sleep(wait * 10);
+        rt.exec(new String[]{"cmd.exe", "/c", "mkdir " + pathDisk + "\\Plural\\ip-table"});
+        Thread.sleep(wait * 10);
+        System.out.println("Создание журнала подключений");
+        rt.exec(new String[]{"cmd.exe", "/c", "mkdir " + pathDisk + "\\Plural\\history"});
+        rt.exec(new String[]{"cmd.exe", "/c", "echo > " + pathDisk + "\\Plural\\history\\history.txt"});
+        Thread.sleep(wait);
+        rt.exec(new String[]{"cmd.exe", "/c", "mkdir " + pathDisk + "\\Plural\\Screenshot"});
+        Thread.sleep(wait * 10);
+        System.out.println("Установка завершена.");
     }
 }
-
