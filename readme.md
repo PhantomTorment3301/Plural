@@ -8,13 +8,13 @@
 
 **COMMANDS**
 
-`ipconnect`
+- `ipconnect`
 
-`searchip`
+- `searchip`
 
-`tableconnect`
+- `tableconnect`
 
-`changeport`
+- `changeport`
   
 
 **COLORS**
